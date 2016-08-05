@@ -86,21 +86,20 @@ class PHPServer_Master {
 
     public function spawnWorker(PHPServer_Worker $worker) {
         if (in_array($worker, $this->workers)) {
-            throw new Exception('u can not spawn a worker instance more than twice');
+            throw new Exception('u can not spawn a worker instance twice');
         }
-        self::setProtectedAttr($worker, 'id', sizeof($this->workers));
+        static::setProtectedProperty($worker, 'id', sizeof($this->workers));
         $this->internalSpawnWorker($worker);
     }
 
     protected function internalSpawnWorker(PHPServer_Worker $worker) {
         $pid = static::internalFork();
+        static::setProtectedProperty($worker, 'pid', $pid);
         if ($pid) { // parent
-            self::setProtectedAttr($worker, 'pid', $pid);
             $this->workers[$worker->getId()] = $worker;
             return $this;
         } else { // child
-            self::setProtectedAttr($worker, 'pid', posix_getpid());
-            self::callProtectedMethod($worker, 'setupSignalHandler');
+            static::callProtectedMethod($worker, 'setupSignalHandler');
             $worker->job();
             exit(0);
         }
@@ -121,25 +120,25 @@ class PHPServer_Master {
         $this->masterExitCallback = $callback;
     }
 
-    public static function setProtectedAttr($obj, $key, $val) {
+    protected static function setProtectedProperty($obj, $property, $val) {
         $clsname = get_class($obj);
         do {
             $reflectCls = new ReflectionClass($clsname);
-            if ($reflectCls->hasProperty($key)) {
+            if ($reflectCls->hasProperty($property)) {
                 break;
             } else {
                 $clsname = get_parent_class($clsname);
             }
         } while ($clsname);
 
-        $pro = $reflectCls->getProperty($key);
+        $pro = $reflectCls->getProperty($property);
         if ($pro->isPrivate() || $pro->isProtected()) {
             $pro->setAccessible(true);
         }
         $pro->setValue($obj, $val);
     }
 
-    public static function callProtectedMethod($obj, $method, $args = null) {
+    protected static function callProtectedMethod($obj, $method, $args = null) {
         $clsname = get_class($obj);
         do {
             $reflectCls = new ReflectionClass($clsname);

@@ -53,17 +53,29 @@ abstract class PHPServer_Worker {
         return $this->id;
     }
 
+    public function inWorkerContext() {
+        return 0===$this->pid;
+    }
+
     /**
      * @return bool
+     * @throws Exception
      */
-    public function ifShouldExit() {
+    protected function ifShouldExit() {
+        if (!$this->inWorkerContext()) { // is not in worker process context
+            throw new Exception('u can not call '.__FUNCTION__.' from out of worker process context');
+        }
         return $this->gotTerm;
     }
 
     /**
      * @return PHPServer_Signal
+     * @throws Exception
      */
     public function getSignal() {
+        if (!$this->inWorkerContext()) { // is not in worker process context
+            throw new Exception('u can not call '.__FUNCTION__.' from out of worker process context');
+        }
         return $this->signal;
     }
 
