@@ -13,6 +13,10 @@ set_time_limit(0);
 require __DIR__.'/autoload.php';
 
 
+$cmd = isset($argv[1]) ? $argv[1] : 'start';
+
+PHPServer_Helper::checkContinue($cmd, $argv[0].'.pid');
+
 
 class MyWorker extends PHPServer_Worker{
     public function job() {
@@ -38,7 +42,9 @@ class MyWorker extends PHPServer_Worker{
 
 $master = new PHPServer_Master;
 
-//$master->demonize();
+if ($cmd == 'daemon') {
+    $master->demonize();
+}
 
 $master->spawnWorker(new MyWorker);
 $master->spawnWorker(new MyWorker);

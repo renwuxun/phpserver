@@ -21,6 +21,10 @@ class PHPServer_Master {
 
     protected $masterExitCallback;
 
+    protected $pidFile;
+    protected $stdoutFile;
+    protected $stderrFile;
+
     public function __construct() {
         $this->signal = new PHPServer_Signal;
         $this->signal->registerHandler(SIGCHLD, function(){
@@ -35,6 +39,23 @@ class PHPServer_Master {
                 posix_kill($worker->getPid(), SIGTERM);
             }
         });
+
+        $this->pidFile = $GLOBALS['argv'][0].'.pid';
+    }
+
+    public function setPidFile($filename) {
+        $this->pidFile = $filename;
+        return $this;
+    }
+
+    public function setStdoutFile($filename) {
+        $this->stdoutFile = $filename;
+        return $this;
+    }
+
+    public function setStderrFile($filename) {
+        $this->stderrFile = $filename;
+        return $this;
     }
 
     protected function onChildExit($pid, $status) {
@@ -77,10 +98,29 @@ class PHPServer_Master {
     }
 
     public function demonize() {
+        $this->signal->registerHandler(SIGTTOU, function(){});
+        $this->signal->registerHandler(SIGTTIN, function(){});
+        $this->signal->registerHandler(SIGTSTP, function(){});
+        $this->signal->registerHandler(SIGHUP, function(){});
         if (static::internalFork()) {
             exit(0);
         } else {
             posix_setsid();
+            if (static::internalFork()) {
+                exit(0);
+            }
+            umask(0);
+            fclose(STDIN);
+            $GLOBALS['stdin'] = fopen('/dev/null', 'r');
+            if ($this->stdoutFile) {
+                fclose(STDOUT);
+                $GLOBALS['stdout'] = fopen($this->stdoutFile, 'a');
+            }
+            if ($this->stderrFile) {
+                fclose(STDERR);
+                $GLOBALS['stderr'] = fopen($this->stderrFile, 'a');
+            }
+            PHPServer_Helper::writePidFile($this->pidFile);
         }
     }
 

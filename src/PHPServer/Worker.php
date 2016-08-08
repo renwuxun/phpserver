@@ -20,21 +20,15 @@ abstract class PHPServer_Worker {
     /**
      * @var PHPServer_Signal
      */
-    private $signal;
+    private $_signal;
     /**
      * @var bool
      */
     private $gotTerm = false;
 
-    /**
-     * PHPServer_Worker constructor.
-     */
-    public function __construct() {
-        $this->signal = new PHPServer_Signal;
-    }
 
     private function setupSignalHandler() {
-        $this->signal->registerHandler(SIGTERM, function(){
+        $this->getSignal()->registerHandler(SIGTERM, function(){
             $this->gotTerm = true;
         });
     }
@@ -72,11 +66,14 @@ abstract class PHPServer_Worker {
      * @return PHPServer_Signal
      * @throws Exception
      */
-    public function getSignal() {
+    protected function getSignal() {
         if (!$this->inWorkerContext()) { // is not in worker process context
             throw new Exception('u can not call '.__FUNCTION__.' from out of worker process context');
         }
-        return $this->signal;
+        if (null === $this->_signal) {
+            $this->_signal = new PHPServer_Signal;
+        }
+        return $this->_signal;
     }
 
     abstract public function job();
