@@ -22,8 +22,6 @@ class PHPServer_Master {
     protected $masterExitCallback;
 
     protected $pidFile;
-    protected $stdoutFile;
-    protected $stderrFile;
 
     public function __construct() {
         $this->signal = new PHPServer_Signal;
@@ -45,16 +43,6 @@ class PHPServer_Master {
 
     public function setPidFile($filename) {
         $this->pidFile = $filename;
-        return $this;
-    }
-
-    public function setStdoutFile($filename) {
-        $this->stdoutFile = $filename;
-        return $this;
-    }
-
-    public function setStderrFile($filename) {
-        $this->stderrFile = $filename;
         return $this;
     }
 
@@ -110,16 +98,6 @@ class PHPServer_Master {
                 exit(0);
             }
             umask(0);
-            fclose(STDIN);
-            $GLOBALS['stdin'] = fopen('/dev/null', 'r');
-            if ($this->stdoutFile) {
-                fclose(STDOUT);
-                $GLOBALS['stdout'] = fopen($this->stdoutFile, 'a');
-            }
-            if ($this->stderrFile) {
-                fclose(STDERR);
-                $GLOBALS['stderr'] = fopen($this->stderrFile, 'a');
-            }
             PHPServer_Helper::writePidFile($this->pidFile);
         }
     }
