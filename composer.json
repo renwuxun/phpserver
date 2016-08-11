@@ -1,6 +1,6 @@
 {
     "name": "renwuxun/phpserver",
-    "license": "proprietary",
+    "license": "MIT",
     "require": {
         "php": ">=5.3.0"
     },
