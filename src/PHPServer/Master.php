@@ -107,6 +107,7 @@ class PHPServer_Master {
             throw new Exception('u can not spawn a worker instance twice');
         }
         static::setProtectedProperty($worker, 'id', sizeof($this->workers));
+        $this->workers[$worker->getId()] = $worker;
         $this->internalSpawnWorker($worker);
     }
 
@@ -114,7 +115,6 @@ class PHPServer_Master {
         $pid = static::internalFork();
         static::setProtectedProperty($worker, 'pid', $pid);
         if ($pid) { // parent
-            $this->workers[$worker->getId()] = $worker;
             return $this;
         } else { // child
             static::callProtectedMethod($worker, 'setupSignalHandler');
