@@ -24,6 +24,8 @@ class PHPServer_Master {
     protected $pidFile;
 
     public function __construct() {
+        cli_set_process_title($GLOBALS['argv'][0].':master');
+
         $this->signal = new PHPServer_Signal;
         $this->signal->registerHandler(SIGCHLD, function(){
             while (($pid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
@@ -32,6 +34,12 @@ class PHPServer_Master {
             gc_collect_cycles();
         });
         $this->signal->registerHandler(SIGTERM, function(){
+            $this->gotTerm = true;
+            foreach ($this->workers as $worker) {
+                posix_kill($worker->getPid(), SIGTERM);
+            }
+        });
+        $this->signal->registerHandler(SIGINT, function(){
             $this->gotTerm = true;
             foreach ($this->workers as $worker) {
                 posix_kill($worker->getPid(), SIGTERM);
@@ -118,6 +126,7 @@ class PHPServer_Master {
             return $this;
         } else { // child
             static::callProtectedMethod($worker, 'setupSignalHandler');
+            cli_set_process_title($GLOBALS['argv'][0].':worker');
             $worker->job();
             exit(0);
         }

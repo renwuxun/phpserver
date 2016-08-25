@@ -59,6 +59,7 @@ abstract class PHPServer_Worker {
         if (!$this->inWorkerContext()) { // is not in worker process context
             throw new Exception('u can not call '.__FUNCTION__.' from out of worker process context');
         }
+        $this->getSignal()->dispatch();
         return $this->gotTerm;
     }
 
