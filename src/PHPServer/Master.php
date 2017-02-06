@@ -19,8 +19,6 @@ class PHPServer_Master {
      */
     protected $signal;
 
-    protected $masterExitCallback;
-
     protected $pidFile;
 
     public function __construct() {
@@ -137,14 +135,6 @@ class PHPServer_Master {
             $this->signal->dispatch();
             usleep(100000);
         }
-
-        if (is_callable($this->masterExitCallback)) {
-            call_user_func_array($this->masterExitCallback, [$this]);
-        }
-    }
-
-    public function onMasterExit(callable $callback) {
-        $this->masterExitCallback = $callback;
     }
 
     protected static function setProtectedProperty($obj, $property, $val) {

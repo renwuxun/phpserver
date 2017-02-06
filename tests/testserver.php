@@ -49,8 +49,7 @@ $master->spawnWorker(new MyWorker);
 $master->spawnWorker(new MyWorker);
 
 
-$master->onMasterExit(function(){
-    echo 'master exit'.PHP_EOL;
-});
 
 $master->waitWorkers();
+
+echo 'master exit'.PHP_EOL;
