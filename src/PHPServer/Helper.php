@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/8 0008
  * Time: 10:29
  */
@@ -47,5 +47,41 @@ class PHPServer_Helper {
                 echo "      php {$argv[0]} stop\n";
                 die();
         }
+    }
+
+    public static function setProtectedProperty($obj, $property, $val) {
+        $clsname = get_class($obj);
+        do {
+            $reflectCls = new ReflectionClass($clsname);
+            if ($reflectCls->hasProperty($property)) {
+                break;
+            } else {
+                $clsname = get_parent_class($clsname);
+            }
+        } while ($clsname);
+
+        $pro = $reflectCls->getProperty($property);
+        if ($pro->isPrivate() || $pro->isProtected()) {
+            $pro->setAccessible(true);
+        }
+        $pro->setValue($obj, $val);
+    }
+
+    public static function callProtectedMethod($obj, $method, $args = null) {
+        $clsname = get_class($obj);
+        do {
+            $reflectCls = new ReflectionClass($clsname);
+            if ($reflectCls->hasMethod($method)) {
+                break;
+            } else {
+                $clsname = get_parent_class($clsname);
+            }
+        } while ($clsname);
+
+        $mtd = $reflectCls->getMethod($method);
+        if ($mtd->isPrivate() || $mtd->isProtected()) {
+            $mtd->setAccessible(true);
+        }
+        $mtd->invoke($obj, $args);
     }
 }

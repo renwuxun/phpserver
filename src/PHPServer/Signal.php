@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/5 0005
  * Time: 17:54
  */
@@ -18,7 +18,7 @@ class PHPServer_Signal implements Countable {
     private $signalQueue;
 
     public function __construct() {
-        $this->handlers = [];
+        $this->handlers = array();
 
         $this->signalQueue = new SplQueue();
         $this->signalQueue->setIteratorMode(SplQueue::IT_MODE_DELETE);
@@ -39,9 +39,9 @@ class PHPServer_Signal implements Countable {
         }
 
         if (!isset($this->handlers[$signal])) {
-            $this->handlers[$signal] = [];
+            $this->handlers[$signal] = array();
 
-            if (!pcntl_signal($signal, [$this, 'handleSignal'])) {
+            if (!pcntl_signal($signal, array($this, 'handleSignal'))) {
                 throw new RuntimeException(sprintf('Could not register signal %d with pcntl_signal', $signal));
             };
         };

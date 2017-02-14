@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/5 0005
  * Time: 17:52
  */
@@ -10,7 +10,7 @@ class PHPServer_Master {
     /**
      * @var PHPServer_Worker[]
      */
-    protected $workers = [];
+    protected $workers = array();
 
     protected $gotTerm = false;
 
@@ -21,27 +21,33 @@ class PHPServer_Master {
 
     protected $pidFile;
 
+    protected function signalChildHandler() {
+        while (($pid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
+            $this->onChildExit($pid, $status);
+        }
+        gc_collect_cycles();
+    }
+    protected function signalTermHandler() {
+        $this->gotTerm = true;
+        foreach ($this->workers as $worker) {
+            posix_kill($worker->getPid(), SIGTERM);
+        }
+    }
+
     public function __construct() {
         cli_set_process_title($GLOBALS['argv'][0].':master');
 
+        $_this = $this;
+
         $this->signal = new PHPServer_Signal;
-        $this->signal->registerHandler(SIGCHLD, function(){
-            while (($pid = pcntl_waitpid(-1, $status, WNOHANG)) > 0) {
-                $this->onChildExit($pid, $status);
-            }
-            gc_collect_cycles();
+        $this->signal->registerHandler(SIGCHLD, function() use ($_this) {
+            PHPServer_Helper::callProtectedMethod($_this, 'signalChildHandler');
         });
-        $this->signal->registerHandler(SIGTERM, function(){
-            $this->gotTerm = true;
-            foreach ($this->workers as $worker) {
-                posix_kill($worker->getPid(), SIGTERM);
-            }
+        $this->signal->registerHandler(SIGTERM, function() use ($_this) {
+            PHPServer_Helper::callProtectedMethod($_this, 'signalTermHandler');
         });
-        $this->signal->registerHandler(SIGINT, function(){
-            $this->gotTerm = true;
-            foreach ($this->workers as $worker) {
-                posix_kill($worker->getPid(), SIGTERM);
-            }
+        $this->signal->registerHandler(SIGINT, function() use ($_this) {
+            PHPServer_Helper::callProtectedMethod($_this, 'signalTermHandler');
         });
 
         $this->pidFile = $GLOBALS['argv'][0].'.pid';
@@ -112,18 +118,18 @@ class PHPServer_Master {
         if (in_array($worker, $this->workers)) {
             throw new Exception('u can not spawn a worker instance twice');
         }
-        static::setProtectedProperty($worker, 'id', sizeof($this->workers));
+        PHPServer_Helper::setProtectedProperty($worker, 'id', sizeof($this->workers));
         $this->workers[$worker->getId()] = $worker;
         $this->internalSpawnWorker($worker);
     }
 
     protected function internalSpawnWorker(PHPServer_Worker $worker) {
         $pid = static::internalFork();
-        static::setProtectedProperty($worker, 'pid', $pid);
+        PHPServer_Helper::setProtectedProperty($worker, 'pid', $pid);
         if ($pid) { // parent
             return $this;
         } else { // child
-            static::callProtectedMethod($worker, 'setupSignalHandler');
+            PHPServer_Helper::callProtectedMethod($worker, 'setupSignalHandler');
             cli_set_process_title($GLOBALS['argv'][0].':worker');
             $worker->job();
             exit(0);
@@ -135,41 +141,5 @@ class PHPServer_Master {
             $this->signal->dispatch();
             usleep(100000);
         }
-    }
-
-    protected static function setProtectedProperty($obj, $property, $val) {
-        $clsname = get_class($obj);
-        do {
-            $reflectCls = new ReflectionClass($clsname);
-            if ($reflectCls->hasProperty($property)) {
-                break;
-            } else {
-                $clsname = get_parent_class($clsname);
-            }
-        } while ($clsname);
-
-        $pro = $reflectCls->getProperty($property);
-        if ($pro->isPrivate() || $pro->isProtected()) {
-            $pro->setAccessible(true);
-        }
-        $pro->setValue($obj, $val);
-    }
-
-    protected static function callProtectedMethod($obj, $method, $args = null) {
-        $clsname = get_class($obj);
-        do {
-            $reflectCls = new ReflectionClass($clsname);
-            if ($reflectCls->hasMethod($method)) {
-                break;
-            } else {
-                $clsname = get_parent_class($clsname);
-            }
-        } while ($clsname);
-
-        $mtd = $reflectCls->getMethod($method);
-        if ($mtd->isPrivate() || $mtd->isProtected()) {
-            $mtd->setAccessible(true);
-        }
-        $mtd->invoke($obj, $args);
     }
 }

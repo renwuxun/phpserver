@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/5 0005
  * Time: 17:56
  */
@@ -10,7 +10,7 @@
 set_time_limit(0);
 
 
-require __DIR__.'/autoload.php';
+require __DIR__.'/../vendor/autoload.php';
 
 
 $cmd = isset($argv[1]) ? $argv[1] : 'start';

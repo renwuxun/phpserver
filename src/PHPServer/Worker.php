@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/5 0005
  * Time: 17:53
  */
@@ -28,8 +28,9 @@ abstract class PHPServer_Worker {
 
 
     private function setupSignalHandler() {
-        $this->getSignal()->registerHandler(SIGTERM, function(){
-            $this->gotTerm = true;
+        $_this = $this;
+        $this->getSignal()->registerHandler(SIGTERM, function() use($_this){
+            PHPServer_Helper::setProtectedProperty($_this, 'gotTerm', true);
         });
     }
 
