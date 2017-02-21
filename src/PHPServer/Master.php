@@ -35,6 +35,8 @@ class PHPServer_Master {
     }
 
     public function __construct() {
+        set_time_limit(0);
+
         cli_set_process_title($GLOBALS['argv'][0].':master');
 
         $_this = $this;
