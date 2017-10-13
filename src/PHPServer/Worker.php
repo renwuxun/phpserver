@@ -6,80 +6,88 @@
  * Date: 2016/8/5 0005
  * Time: 17:53
  */
-abstract class PHPServer_Worker {
-    /**
-     * 不同任务的worker应该有不同的id
-     * @var int
-     */
-    private $id;
-    /**
-     * @var int
-     */
-    private $pid;
+abstract class PHPServer_Worker extends PHPServer_Process {
 
     /**
-     * @var PHPServer_Signal
+     * @var PHPServer_EventLoop
      */
-    private $_signal;
-    /**
-     * @var bool
-     */
-    private $gotTerm = false;
+    protected $eventLoop;
 
+    protected $defaultSignalHandlers = array(
+        array(SIGCHLD, 'chldHandler'),
+        array(SIGTERM, 'termHandler'),
+        array(SIGINT, 'intHandler'),
+        array(SIGQUIT, 'quitHandler'),
+        array(SIGHUP, 'hupHandler'),
+        array(SIGWINCH, 'winchHandler'),
+        array(SIGUSR1, 'usr1Handler'),
+        array(SIGUSR2, 'usr2Handler'),
+        array(SIGALRM, 'alrmHandler'),
+        array(SIGIO, 'ioHandler')
+    );
 
-    private function setupSignalHandler() {
-        $this->getSignal()->registerHandler(SIGTERM, function(){
-            $this->gotTerm = true;
-        });
-    }
-
-    /**
-     * @return int
-     */
-    public function getPid() {
-        return $this->pid;
-    }
-
-    /**
-     * @return int
-     */
-    public function getId() {
-        return $this->id;
-    }
-
-    public function inWorkerContext() {
-        return 0===$this->pid;
-    }
-
-    /**
-     * @return bool
-     * @throws Exception
-     */
-    protected function ifShouldExit() {
-        if (!$this->inWorkerContext()) { // is not in worker process context
-            throw new Exception('u can not call '.__FUNCTION__.' from out of worker process context');
+    public function __construct(PHPServer_EventLoop $eventLoop = null) {
+        if ($eventLoop) {
+            $this->eventLoop = $eventLoop;
+        } else {
+            $this->eventLoop = new PHPServer_EventLoop;
         }
-        $this->getSignal()->dispatch();
-        return $this->gotTerm;
+    }
+
+    protected function registerDefaultSignalHandlers() {
+        foreach ($this->defaultSignalHandlers as $item) {
+            if ($item[1] != '') {
+                $this->eventLoop->registerSignalHandler($item[0], array($this, $item[1]));
+            }
+        }
     }
 
     /**
-     * @return PHPServer_Signal
-     * @throws Exception
+     * @internal
      */
-    protected function getSignal() {
-        if (!$this->inWorkerContext()) { // is not in worker process context
-            throw new Exception('u can not call '.__FUNCTION__.' from out of worker process context');
-        }
-        if (null === $this->_signal) {
-            $this->_signal = new PHPServer_Signal;
-        }
-        return $this->_signal;
+    public function chldHandler() {}
+    /**
+     * @internal
+     */
+    public function termHandler() {}
+    /**
+     * @internal
+     */
+    public function intHandler() {}
+    /**
+     * @internal
+     */
+    public function quitHandler() { // 立即退出
+        exit(SIGQUIT);
     }
+    /**
+     * @internal
+     */
+    public function hupHandler() {}
+    /**
+     * @internal
+     */
+    public function winchHandler() { // 优雅退出
+        $this->eventLoop->setBreak(true);
+    }
+    /**
+     * @internal
+     */
+    public function usr1Handler() {}
+    /**
+     * @internal
+     */
+    public function usr2Handler() {}
+    /**
+     * @internal
+     */
+    public function alrmHandler() {}
+    /**
+     * @internal
+     */
+    public function ioHandler() {}
 
-    abstract public function job();
-    abstract public function callFromMasterOnError($status);
-    abstract public function callFromMasterOnSuccess($status);
-    abstract public function callFromMasterOnTerm($status);
-
+    public function run() {
+        return $this->eventLoop->loop();
+    }
 }
