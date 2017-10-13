@@ -30,11 +30,12 @@ class MyWorker extends PHPServer_Worker{
                 exit(SIGQUIT);
             }
         );
+        $th = $this;
         $this->eventLoop->registerSignalHandler(
             SIGWINCH,
-            function(){
+            function() use ($th) {
                 echo 'worker '.posix_getpid().' got SIGWINCH:'.SIGQUIT.PHP_EOL;
-                $this->eventLoop->setBreak(true);
+                $th->eventLoop->setBreak(true);
             }
         );
     }

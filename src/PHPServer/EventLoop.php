@@ -51,9 +51,16 @@ class PHPServer_EventLoop {
     protected function afterLoop() {}
 
     protected function processEvent() {
+        $signalTimeoutSec = 0;
+        $signalTimeoutNanoSec = 0;
+        if (empty($this->idleHandlers) && empty($this->onceHandlers)) {
+            $signalTimeoutSec = $this->signalTimeoutSec;
+            $signalTimeoutNanoSec = $this->signalTimeoutNanoSec;
+        }
+
         // process signal
         $sigInfo = array();
-        if (pcntl_sigtimedwait($this->listenSignals, $sigInfo, $this->signalTimeoutSec, $this->signalTimeoutNanoSec)>0) {
+        if (pcntl_sigtimedwait($this->listenSignals, $sigInfo, $signalTimeoutSec, $signalTimeoutNanoSec)>0) {
             $this->signalQueue->enqueue($sigInfo['signo']);
         }
     }

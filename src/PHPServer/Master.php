@@ -33,10 +33,11 @@ class PHPServer_Master extends PHPServer_Worker {
             $this->demonize();
         }
 
+        $th = $this;
         $this->eventLoop->registerOnceHandler(
-            function() use ($workerNames) {
+            function() use ($workerNames, $th) {
                 foreach ($workerNames as $workerName) {
-                    $this->spawnWorker($workerName);
+                    $th->spawnWorker($workerName);
                 }
             }
         );
