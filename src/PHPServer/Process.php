@@ -31,7 +31,11 @@ abstract class PHPServer_Process {
         }
     }
 
-    public static function spawn(callable $childPrcess) {
+    /**
+     * @param callable $childPrcess
+     * @return int
+     */
+    public static function spawn($childPrcess) {
         $childPid = self::fork();
         if ($childPid) { // parent
             return $childPid;
