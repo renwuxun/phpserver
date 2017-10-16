@@ -21,7 +21,7 @@ class MyWorker extends PHPServer_Worker{
         $this->eventLoop->setSignalWaitTimeout(1);
 
         $this->eventLoop->registerIdleHandler(
-            function(){echo 'worker idle'.PHP_EOL;}
+            function(){ echo 'worker idle'.PHP_EOL; usleep(1000*100);}
         );
         $this->eventLoop->registerSignalHandler(
             SIGQUIT,
@@ -30,12 +30,12 @@ class MyWorker extends PHPServer_Worker{
                 exit(SIGQUIT);
             }
         );
-        $th = $this;
+        $loop = $this->eventLoop;
         $this->eventLoop->registerSignalHandler(
             SIGWINCH,
-            function() use ($th) {
+            function() use ($loop) {
                 echo 'worker '.posix_getpid().' got SIGWINCH:'.SIGQUIT.PHP_EOL;
-                $th->eventLoop->setBreak(true);
+                $loop->setBreak(true);
             }
         );
     }

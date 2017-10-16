@@ -86,7 +86,7 @@ class PHPServer_Master extends PHPServer_Worker {
     }
     public function winchHandler() {}
 
-    protected function spawnWorker($workerName) {
+    public function spawnWorker($workerName) {
         if (!is_subclass_of($workerName, 'PHPServer_Worker') ) {
             throw new Exception('worker must subclass of PHPServer_Worker', 1);
         }
