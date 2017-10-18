@@ -32,9 +32,7 @@ abstract class PHPServer_Worker extends PHPServer_Process {
         } else {
             $this->eventLoop = new PHPServer_EventLoop;
         }
-    }
 
-    protected function registerDefaultSignalHandlers() {
         foreach ($this->defaultSignalHandlers as $item) {
             if ($item[1] != '') {
                 $this->eventLoop->registerSignalHandler($item[0], array($this, $item[1]));

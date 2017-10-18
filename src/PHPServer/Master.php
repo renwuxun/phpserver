@@ -20,8 +20,6 @@ class PHPServer_Master extends PHPServer_Worker {
     public function __construct(array $workerNames) {
         parent::__construct();
 
-        $this->registerDefaultSignalHandlers();
-
         cli_set_process_title($GLOBALS['argv'][0].':master');
 
         $this->pidFile = $GLOBALS['argv'][0].'.pid';

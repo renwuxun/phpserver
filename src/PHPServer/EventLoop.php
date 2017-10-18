@@ -86,8 +86,8 @@ class PHPServer_EventLoop {
             }
             if (!empty($this->onceHandlers)) { // 处理一锤子买卖
                 foreach ($this->onceHandlers as $k=>$onceHandler) {
-                    unset($this->onceHandlers[$k]);
                     call_user_func($onceHandler);
+                    unset($this->onceHandlers[$k]);
                 }
             }
         }
