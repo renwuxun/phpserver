@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: renwuxun
+ * User: mofan
  * Date: 2016/8/8 0008
  * Time: 10:29
  */
@@ -40,11 +40,19 @@ class PHPServer_Helper {
                 posix_kill((int)file_get_contents($pidFile), SIGTERM);
                 die();
                 break;
+            case 'reload';
+                if (!self::ifServerRunning($pidFile)) {
+                    die("{$argv[0]} is not running\n");
+                }
+                posix_kill((int)file_get_contents($pidFile), SIGHUP);
+                die();
+                break;
             default:
                 echo "usage:\n";
                 echo "      php {$argv[0]}\n";
                 echo "      php {$argv[0]} daemon\n";
                 echo "      php {$argv[0]} stop\n";
+                echo "      php {$argv[0]} reload\n";
                 die();
         }
     }
