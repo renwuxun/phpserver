@@ -106,15 +106,15 @@ class PHPServer_Event_Loop {
 
             $readFps = array_column($this->readHandlers, 'fp');
             $writeFps = array_column($this->writeHandlers, 'fp');
-            echo posix_getpid().' '.sizeof($readFps).'r,w'.sizeof($writeFps)." timeout:{$loopTimeout} ".(($loopTimeout-(int)($loopTimeout))*1000000).PHP_EOL;
+            //echo posix_getpid().' '.sizeof($readFps).'r,w'.sizeof($writeFps)." timeout:{$loopTimeout} ".(($loopTimeout-(int)($loopTimeout))*1000000).PHP_EOL;
             $except = array();
             if (0 < @stream_select($readFps, $writeFps, $except, (int)$loopTimeout, ($loopTimeout-(int)($loopTimeout))*1000000)) {
                 foreach ($readFps as $readFp) {
-                    echo posix_getpid().' 有可读事件发生'.PHP_EOL;
+                    //echo posix_getpid().' 有可读事件发生'.PHP_EOL;
                     $this->readQueue->enqueue((int)$readFp);
                 }
                 foreach ($writeFps as $writeFp) {
-                    echo posix_getpid().' 有可写事件发生'.PHP_EOL;
+                    //echo posix_getpid().' 有可写事件发生'.PHP_EOL;
                     $this->writeQueue->enqueue((int)$writeFp);
                 }
             }
@@ -155,11 +155,11 @@ class PHPServer_Event_Loop {
             /**
              * @var $iFp int
              */
-            echo posix_getpid().' 触发读事件'.PHP_EOL;
+            //echo posix_getpid().' 触发读事件'.PHP_EOL;
             call_user_func($this->readHandlers[$iFp]['handler'], $this->readHandlers[$iFp]['fp']);
         }
         foreach ($this->writeQueue as $iFp) {
-            echo posix_getpid().' 触发写事件'.PHP_EOL;
+            //echo posix_getpid().' 触发写事件'.PHP_EOL;
             call_user_func($this->writeHandlers[$iFp]['handler'], $this->writeHandlers[$iFp]['fp']);
         }
         foreach ($this->onceQueue as $once) {
