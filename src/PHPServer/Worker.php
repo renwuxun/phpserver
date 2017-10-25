@@ -8,7 +8,7 @@
  */
 abstract class PHPServer_Worker extends PHPServer_Process {
 
-    public function __construct(PHPServer_EventLoop $eventLoop = null) {
+    public function __construct(PHPServer_Event_Loop $eventLoop = null) {
         parent::__construct($eventLoop);
 
         cli_set_process_title($GLOBALS['argv'][0].':worker');
