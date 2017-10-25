@@ -190,6 +190,16 @@ class PHPServer_Event_Loop {
     public function registerTimerHandler(PHPServer_Event_Timer $timer) {
         $this->timerHeap->insert($timer);
     }
+    public function removeTimerHandler(PHPServer_Event_Timer $timer) {
+        $newHeap = new PHPServer_Event_TimerHeap;
+        foreach ($this->timerHeap as $_timer) {
+            if ($_timer != $timer) {
+                $newHeap->insert($_timer);
+            }
+        }
+        unset($this->timerHeap);
+        $this->timerHeap = $newHeap;
+    }
 
     public function registerReadHandler($fp, $readHandler) {
         $this->readHandlers[(int)$fp] = array(
