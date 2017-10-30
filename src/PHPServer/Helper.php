@@ -30,22 +30,25 @@ class PHPServer_Helper {
             case 'start':
             case 'daemon':
                 if (self::ifServerRunning($pidFile)) {
-                    die("{$argv[0]} is running\n");
+                    fprintf(STDERR, PHPServer_Log::format("{$argv[0]} is running\n", PHPServer_Log::LEVEL_WARNING));
+                    exit(1);
                 }
                 break;
             case 'stop';
                 if (!self::ifServerRunning($pidFile)) {
-                    die("{$argv[0]} is not running\n");
+                    fprintf(STDERR, PHPServer_Log::format("{$argv[0]} is not running\n", PHPServer_Log::LEVEL_WARNING));
+                    exit(1);
                 }
                 posix_kill((int)file_get_contents($pidFile), SIGTERM);
-                die();
+                exit(0);
                 break;
             case 'reload';
                 if (!self::ifServerRunning($pidFile)) {
-                    die("{$argv[0]} is not running\n");
+                    fprintf(STDERR, PHPServer_Log::format("{$argv[0]} is not running\n", PHPServer_Log::LEVEL_WARNING));
+                    exit(1);
                 }
                 posix_kill((int)file_get_contents($pidFile), SIGHUP);
-                die();
+                exit(0);
                 break;
             default:
                 echo "usage:\n";
