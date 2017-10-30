@@ -1,7 +1,7 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/5 0005
  * Time: 17:56
  */
@@ -17,8 +17,6 @@ class MyWorker extends PHPServer_Worker{
 
     public function __construct() {
         parent::__construct();
-
-        $this->eventLoop->setSignalWaitTimeout(1);
 
         $this->eventLoop->registerIdleHandler(
             function(){ echo 'worker idle'.PHP_EOL; usleep(1000*100);}

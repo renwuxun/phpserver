@@ -6,7 +6,7 @@
  * Date: 2016/8/5 0005
  * Time: 17:52
  */
-class PHPServer_Master extends PHPServer_Worker {
+class PHPServer_Master extends PHPServer_Process {
 
     /**
      * @var array
@@ -18,9 +18,8 @@ class PHPServer_Master extends PHPServer_Worker {
     protected $pidFile;
 
     public function __construct(array $workerNames) {
-        parent::__construct();
 
-        $this->registerDefaultSignalHandlers();
+        parent::__construct();
 
         cli_set_process_title($GLOBALS['argv'][0].':master');
 
@@ -33,14 +32,9 @@ class PHPServer_Master extends PHPServer_Worker {
             $this->demonize();
         }
 
-        $th = $this;
-        $this->eventLoop->registerOnceHandler(
-            function() use ($workerNames, $th) {
-                foreach ($workerNames as $workerName) {
-                    $th->spawnWorker($workerName);
-                }
-            }
-        );
+        foreach ($workerNames as $workerName) {
+            $this->spawnWorker($workerName);
+        }
 
         PHPServer_Helper::writePidFile($this->pidFile);
     }
@@ -53,8 +47,10 @@ class PHPServer_Master extends PHPServer_Worker {
                 if (empty($this->workers)) {
                     $this->eventLoop->setBreak(true);
                 }
+                fprintf(STDOUT, "worker[$pid] exit\n");
                 continue;
             }
+
 
             $this->spawnWorker($workName);
         }
@@ -65,23 +61,27 @@ class PHPServer_Master extends PHPServer_Worker {
         $this->gotExitSignal = true;
         foreach ($this->workers as $pid=>$workerName) {
             posix_kill($pid, SIGQUIT);
+            posix_kill($pid, SIGALRM);
         }
     }
     public function intHandler() {
         $this->gotExitSignal = true;
         foreach ($this->workers as $pid=>$workerName) {
             posix_kill($pid, SIGQUIT);
+            posix_kill($pid, SIGALRM);
         }
     }
     public function quitHandler() {
         $this->gotExitSignal = true;
         foreach ($this->workers as $pid=>$workerName) {
             posix_kill($pid, SIGWINCH);
+            posix_kill($pid, SIGALRM);
         }
     }
     public function hupHandler() { // reload
         foreach ($this->workers as $pid=>$workerName) {
             posix_kill($pid, SIGWINCH);
+            posix_kill($pid, SIGALRM);
         }
     }
     public function winchHandler() {}
@@ -93,7 +93,6 @@ class PHPServer_Master extends PHPServer_Worker {
 
         $childPid = static::spawn(
             function() use ($workerName){
-                cli_set_process_title($GLOBALS['argv'][0].':worker');
                 /**
                  * @var $worker PHPServer_Worker
                  */
