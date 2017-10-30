@@ -2,17 +2,13 @@
 
 
 
-interface PHPServer_ILog {
-    static function logFile();
-}
-
 /**
  * Created by PhpStorm.
  * User: renwuxun
  * Date: 10-30 00030
  * Time: 11:02
  */
-abstract class PHPServer_Log implements PHPServer_ILog{
+class PHPServer_Log {
 
     const LEVEL_EMERG = 'EMERG';
     const LEVEL_ALERT = 'ALERT';
@@ -29,6 +25,10 @@ abstract class PHPServer_Log implements PHPServer_ILog{
             $msg .= ' '.json_encode($context);
         }
         return $msg;
+    }
+
+    public static function logFile() {
+        return dirname(dirname(dirname(dirname(dirname(__DIR__))))).'/log/'.date('Y-m-d').'.log';
     }
 
     protected static function log($msg, $level, $context = array()) {
