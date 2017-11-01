@@ -9,6 +9,6 @@
 
 spl_autoload_register(function($claname){
     if ('PHPServer_' == substr($claname, 0, 10)) {
-        require (__DIR__.'/../src/'.strtr($claname, '_', '/').'.php');
+        require (dirname(__DIR__).'/src/'.strtr($claname, '_', '/').'.php');
     }
 });
