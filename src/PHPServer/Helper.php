@@ -59,4 +59,15 @@ class PHPServer_Helper {
                 die();
         }
     }
+
+    /**
+     * @return string
+     */
+    public static function localIP() {
+        $localIP = null;
+        if (!$localIP) {
+            $localIP = trim(shell_exec("ifconfig |grep 'inet addr:'|awk '{print $2;exit}'|awk -F: '{print $2}'"));
+        }
+        return $localIP;
+    }
 }

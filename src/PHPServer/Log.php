@@ -2,17 +2,13 @@
 
 
 
-interface PHPServer_ILog {
-    static function logFile();
-}
-
 /**
  * Created by PhpStorm.
  * User: renwuxun
  * Date: 10-30 00030
  * Time: 11:02
  */
-abstract class PHPServer_Log implements PHPServer_ILog{
+class PHPServer_Log {
 
     const LEVEL_EMERG = 'EMERG';
     const LEVEL_ALERT = 'ALERT';
@@ -31,34 +27,38 @@ abstract class PHPServer_Log implements PHPServer_ILog{
         return $msg;
     }
 
+    public static function logFile() {
+        return dirname(dirname(dirname(dirname(dirname(__DIR__))))).'/log/'.date('Y-m-d').'.log';
+    }
+
     protected static function log($msg, $level, $context = array()) {
-        $msg = self::format($msg, $level, $context);
-        file_put_contents(self::logFile(), $msg.PHP_EOL, FILE_APPEND);
+        $msg = static::format($msg, $level, $context);
+        file_put_contents(static::logFile(), $msg.PHP_EOL, FILE_APPEND);
     }
 
     public static function debug($msg, $context = array()) {
-        self::log($msg, self::LEVEL_DEBUG, $context);
+        static::log($msg, static::LEVEL_DEBUG, $context);
     }
     public static function info($msg, $context = array()) {
-        self::log($msg, self::LEVEL_INFO, $context);
+        static::log($msg, static::LEVEL_INFO, $context);
     }
     public static function notice($msg, $context = array()) {
-        self::log($msg, self::LEVEL_NOTICE, $context);
+        static::log($msg, static::LEVEL_NOTICE, $context);
     }
     public static function warning($msg, $context = array()) {
-        self::log($msg, self::LEVEL_WARNING, $context);
+        static::log($msg, static::LEVEL_WARNING, $context);
     }
     public static function error($msg, $context = array()) {
-        self::log($msg, self::LEVEL_ERROR, $context);
+        static::log($msg, static::LEVEL_ERROR, $context);
     }
     public static function crit($msg, $context = array()) {
-        self::log($msg, self::LEVEL_CRIT, $context);
+        static::log($msg, static::LEVEL_CRIT, $context);
     }
     public static function alert($msg, $context = array()) {
-        self::log($msg, self::LEVEL_ALERT, $context);
+        static::log($msg, static::LEVEL_ALERT, $context);
     }
     public static function emerg($msg, $context = array()) {
-        self::log($msg, self::LEVEL_EMERG, $context);
+        static::log($msg, static::LEVEL_EMERG, $context);
     }
 
     public static function aLine($s) {
