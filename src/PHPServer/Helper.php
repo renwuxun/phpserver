@@ -64,7 +64,7 @@ class PHPServer_Helper {
      * @return string
      */
     public static function localIP() {
-        $localIP = null;
+        static $localIP = null;
         if (!$localIP) {
             $localIP = trim(shell_exec("ifconfig |grep 'inet addr:'|awk '{print $2;exit}'|awk -F: '{print $2}'"));
         }
