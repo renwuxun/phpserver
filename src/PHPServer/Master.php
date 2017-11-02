@@ -23,11 +23,13 @@ class PHPServer_Master extends PHPServer_Process {
 
         cli_set_process_title($GLOBALS['argv'][0].':master');
 
-        $this->pidFile = $GLOBALS['argv'][0].'.pid';
+        if (!$this->pidFile) {
+            $this->pidFile = $GLOBALS['argv'][0].'.pid';
+        }
 
 
         $cmd = isset($GLOBALS['argv'][1]) ? $GLOBALS['argv'][1] : 'start';
-        PHPServer_Helper::checkContinue($cmd, $GLOBALS['argv'][0].'.pid');
+        PHPServer_Helper::checkContinue($cmd, $this->pidFile);
         if ($cmd == 'daemon') {
             $this->demonize();
         }

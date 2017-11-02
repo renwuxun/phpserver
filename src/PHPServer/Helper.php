@@ -2,7 +2,7 @@
 
 /**
  * Created by PhpStorm.
- * User: mofan
+ * User: renwuxun
  * Date: 2016/8/8 0008
  * Time: 10:29
  */
@@ -13,6 +13,10 @@ class PHPServer_Helper {
     }
 
     public static function writePidFile($pidFile) {
+        $path = substr($pidFile, 0, strrpos($pidFile, '/'));
+        if (!is_dir($path)) {
+            mkdir($path, 0775, true);
+        }
         if (file_put_contents($pidFile, posix_getpid())) {
             register_shutdown_function(function() use($pidFile) {
                 if (file_exists($pidFile) && posix_getpid() == (int)file_get_contents($pidFile)) {
