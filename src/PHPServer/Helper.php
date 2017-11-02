@@ -74,4 +74,11 @@ class PHPServer_Helper {
         }
         return $localIP;
     }
+
+    public static function noPharFrefix($path) {
+        if ('phar://' == substr($path, 0, 7)) {
+            return substr($path, 7);
+        }
+        return $path;
+    }
 }

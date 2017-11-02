@@ -27,8 +27,16 @@ class PHPServer_Log {
         return $msg;
     }
 
+    public static function logPath() {
+        static $logPath;
+        if (!$logPath) {
+            $logPath = dirname(dirname(dirname(dirname(dirname(__DIR__))))).'/log';
+        }
+        return $logPath;
+    }
+
     public static function logFile() {
-        return dirname(dirname(dirname(dirname(dirname(__DIR__))))).'/log/'.date('Y-m-d').'.log';
+        return static::logPath().'/'.date('Y-m-d').'.log';
     }
 
     protected static function log($msg, $level, $context = array()) {
