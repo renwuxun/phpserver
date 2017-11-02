@@ -34,11 +34,11 @@ class PHPServer_Master extends PHPServer_Process {
             $this->demonize();
         }
 
+        PHPServer_Helper::writePidFile($this->pidFile);
+
         foreach ($workerNames as $workerName) {
             $this->spawnWorker($workerName);
         }
-
-        PHPServer_Helper::writePidFile($this->pidFile);
     }
 
     public function chldHandler() {
