@@ -34,13 +34,13 @@ class PHPServer_Helper {
             case 'start':
             case 'daemon':
                 if (self::ifServerRunning($pidFile)) {
-                    fprintf(STDERR, PHPServer_Log::format("{$argv[0]} is running\n", PHPServer_Log::LEVEL_WARNING));
+                    fprintf(STDERR, "{$argv[0]} is running\n");
                     exit(1);
                 }
                 break;
             case 'stop';
                 if (!self::ifServerRunning($pidFile)) {
-                    fprintf(STDERR, PHPServer_Log::format("{$argv[0]} is not running\n", PHPServer_Log::LEVEL_WARNING));
+                    fprintf(STDERR, "{$argv[0]} is not running\n");
                     exit(1);
                 }
                 posix_kill((int)file_get_contents($pidFile), SIGTERM);
@@ -48,7 +48,7 @@ class PHPServer_Helper {
                 break;
             case 'reload';
                 if (!self::ifServerRunning($pidFile)) {
-                    fprintf(STDERR, PHPServer_Log::format("{$argv[0]} is not running\n", PHPServer_Log::LEVEL_WARNING));
+                    fprintf(STDERR, "{$argv[0]} is not running\n");
                     exit(1);
                 }
                 posix_kill((int)file_get_contents($pidFile), SIGHUP);
@@ -60,7 +60,7 @@ class PHPServer_Helper {
                 echo "      php {$argv[0]} daemon\n";
                 echo "      php {$argv[0]} stop\n";
                 echo "      php {$argv[0]} reload\n";
-                die();
+                exit(0);
         }
     }
 
