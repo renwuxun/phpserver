@@ -108,7 +108,7 @@ class PHPServer_Loop {
             }
         }
 
-        if (!empty($this->readFps) || !empty($this->writeFps)) {
+        if (!empty($this->readHandlers) || !empty($this->writeHandlers)) {
             if ($hasHandlerToCall) {
                 $loopTimeout = 0.0;
             }
