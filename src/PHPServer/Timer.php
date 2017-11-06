@@ -6,7 +6,7 @@
  * Date: 10-24 00024
  * Time: 14:36
  */
-class PHPServer_Event_Timer {
+class PHPServer_Timer {
 
     /**
      * @var float 1508828030.4445

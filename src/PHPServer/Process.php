@@ -10,7 +10,7 @@
 abstract class PHPServer_Process {
 
     /**
-     * @var PHPServer_Event_Loop
+     * @var PHPServer_Loop
      */
     protected $eventLoop;
 
@@ -26,11 +26,11 @@ abstract class PHPServer_Process {
         array(SIGIO, 'ioHandler')
     );
 
-    public function __construct(PHPServer_Event_Loop $eventLoop = null) {
+    public function __construct(PHPServer_Loop $eventLoop = null) {
         if ($eventLoop) {
             $this->eventLoop = $eventLoop;
         } else {
-            $this->eventLoop = new PHPServer_Event_Loop;
+            $this->eventLoop = new PHPServer_Loop;
         }
 
         foreach ($this->defaultSignalHandlers as $item) {

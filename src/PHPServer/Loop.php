@@ -6,7 +6,7 @@
  * Date: 10-24 00024
  * Time: 15:39
  */
-class PHPServer_Event_Loop {
+class PHPServer_Loop {
 
     protected $break = 0;
 
@@ -29,7 +29,7 @@ class PHPServer_Event_Loop {
      */
     protected $timeoutQueue;
     /**
-     * @var PHPServer_Event_TimerHeap
+     * @var PHPServer_TimerHeap
      */
     protected $timerHeap;
 
@@ -77,7 +77,7 @@ class PHPServer_Event_Loop {
         $this->onceQueue = new SplQueue;
         $this->onceQueue->setIteratorMode(SplQueue::IT_MODE_DELETE);
 
-        $this->timerHeap = new PHPServer_Event_TimerHeap;
+        $this->timerHeap = new PHPServer_TimerHeap;
     }
 
     protected function process() {
@@ -85,23 +85,32 @@ class PHPServer_Event_Loop {
 
         $loopTimeout = $this->loopTimeout;
 
+        $hasHandlerToCall = false;
+
         // process idle
         // process once
         // process timeout
         while (!$this->timerHeap->isEmpty() && $this->timerHeap->top()->fireAt <= $this->now) {
+            $hasHandlerToCall = true;
             $this->timeoutQueue->enqueue($this->timerHeap->extract());
         }
 
-        if (!empty($this->readHandlers) || !empty($this->writeHandlers)) {
-            if (!empty($this->idleHandlers) || !$this->onceQueue->isEmpty() || !$this->timeoutQueue->isEmpty()) {
-                $loopTimeout = 0.0;
-            } else {
-                if (!$this->timerHeap->isEmpty()) {
-                    $delta = $this->timerHeap->top()->fireAt - $this->now;
-                    if ($delta < $loopTimeout) {
-                        $loopTimeout = sprintf("%.4f", $delta);
-                    }
+        if (!$hasHandlerToCall) {
+            if (!empty($this->idleHandlers) || !$this->onceQueue->isEmpty()) {
+                $hasHandlerToCall = true;
+            }
+        } else {
+            if (!$this->timerHeap->isEmpty()) {
+                $delta = $this->timerHeap->top()->fireAt - $this->now;
+                if ($delta < $loopTimeout) {
+                    $loopTimeout = sprintf("%.4f", $delta);
                 }
+            }
+        }
+
+        if (!empty($this->readFps) || !empty($this->writeFps)) {
+            if ($hasHandlerToCall) {
+                $loopTimeout = 0.0;
             }
 
             $readFps = array_column($this->readHandlers, 'fp');
@@ -126,7 +135,7 @@ class PHPServer_Event_Loop {
             $loopTimeout = 0.0;
         }
 
-        if ($loopTimeout > 0) {
+        if ($loopTimeout > 0) { // 说明没经历过网络i/o环节，信号环节需要等待
             $this->now += $loopTimeout;
         }
 
@@ -147,7 +156,7 @@ class PHPServer_Event_Loop {
         }
         foreach ($this->timeoutQueue as $timer) {
             /**
-             * @var $timer PHPServer_Event_Timer
+             * @var $timer PHPServer_Timer
              */
             call_user_func($timer->handler);
         }
@@ -187,11 +196,11 @@ class PHPServer_Event_Loop {
         $this->onceQueue->enqueue($onceHandler);
     }
 
-    public function registerTimerHandler(PHPServer_Event_Timer $timer) {
+    public function registerTimerHandler(PHPServer_Timer $timer) {
         $this->timerHeap->insert($timer);
     }
-    public function removeTimerHandler(PHPServer_Event_Timer $timer) {
-        $newHeap = new PHPServer_Event_TimerHeap;
+    public function removeTimerHandler(PHPServer_Timer $timer) {
+        $newHeap = new PHPServer_TimerHeap;
         foreach ($this->timerHeap as $_timer) {
             if ($_timer != $timer) {
                 $newHeap->insert($_timer);
