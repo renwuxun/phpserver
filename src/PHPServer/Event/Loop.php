@@ -6,7 +6,7 @@
  * Date: 10-24 00024
  * Time: 15:39
  */
-class PHPServer_Event_Loop {
+class PHPServer_Loop {
 
     protected $break = 0;
 
@@ -85,23 +85,32 @@ class PHPServer_Event_Loop {
 
         $loopTimeout = $this->loopTimeout;
 
+        $hasHandlerToCall = false;
+
         // process idle
         // process once
         // process timeout
         while (!$this->timerHeap->isEmpty() && $this->timerHeap->top()->fireAt <= $this->now) {
+            $hasHandlerToCall = true;
             $this->timeoutQueue->enqueue($this->timerHeap->extract());
         }
 
-        if (!empty($this->readHandlers) || !empty($this->writeHandlers)) {
-            if (!empty($this->idleHandlers) || !$this->onceQueue->isEmpty() || !$this->timeoutQueue->isEmpty()) {
-                $loopTimeout = 0.0;
-            } else {
-                if (!$this->timerHeap->isEmpty()) {
-                    $delta = $this->timerHeap->top()->fireAt - $this->now;
-                    if ($delta < $loopTimeout) {
-                        $loopTimeout = sprintf("%.4f", $delta);
-                    }
+        if (!$hasHandlerToCall) {
+            if (!empty($this->idleHandlers) || !$this->onceQueue->isEmpty()) {
+                $hasHandlerToCall = true;
+            }
+        } else {
+            if (!$this->timerHeap->isEmpty()) {
+                $delta = $this->timerHeap->top()->fireAt - $this->now;
+                if ($delta < $loopTimeout) {
+                    $loopTimeout = sprintf("%.4f", $delta);
                 }
+            }
+        }
+
+        if (!empty($this->readFps) || !empty($this->writeFps)) {
+            if ($hasHandlerToCall) {
+                $loopTimeout = 0.0;
             }
 
             $readFps = array_column($this->readHandlers, 'fp');
@@ -126,7 +135,7 @@ class PHPServer_Event_Loop {
             $loopTimeout = 0.0;
         }
 
-        if ($loopTimeout > 0) {
+        if ($loopTimeout > 0) { // 说明没经历过网络i/o环节，信号环节需要等待
             $this->now += $loopTimeout;
         }
 
