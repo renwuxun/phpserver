@@ -96,23 +96,17 @@ class PHPServer_Loop {
         }
 
         if (!$hasHandlerToCall) {
-            if (!empty($this->idleHandlers) || !$this->onceQueue->isEmpty()) {
-                $hasHandlerToCall = true;
-            }
-        } else {
             if (!$this->timerHeap->isEmpty()) {
                 $delta = $this->timerHeap->top()->fireAt - $this->now;
                 if ($delta < $loopTimeout) {
                     $loopTimeout = sprintf("%.4f", $delta);
                 }
             }
+        } else {
+            $loopTimeout = 0.0;
         }
 
         if (!empty($this->readHandlers) || !empty($this->writeHandlers)) {
-            if ($hasHandlerToCall) {
-                $loopTimeout = 0.0;
-            }
-
             $readFps = array_column($this->readHandlers, 'fp');
             $writeFps = array_column($this->writeHandlers, 'fp');
             //echo posix_getpid().' '.sizeof($readFps).'r,w'.sizeof($writeFps)." timeout:{$loopTimeout} ".(($loopTimeout-(int)($loopTimeout))*1000000).PHP_EOL;
