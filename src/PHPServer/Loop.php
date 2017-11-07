@@ -8,7 +8,7 @@
  */
 class PHPServer_Loop {
 
-    protected $break = 0;
+    protected $break = false;
 
     protected $now;
 
@@ -106,9 +106,16 @@ class PHPServer_Loop {
             $loopTimeout = 0.0;
         }
 
+        //echo posix_getpid().' readHandlers count: '.sizeof($this->readHandlers).' , readHandlers count: '.sizeof($this->writeHandlers).PHP_EOL;
         if (!empty($this->readHandlers) || !empty($this->writeHandlers)) {
-            $readFps = array_column($this->readHandlers, 'fp');
-            $writeFps = array_column($this->writeHandlers, 'fp');
+            $readFps = array();
+            foreach ($this->readHandlers as $readHandler) {
+                $readFps[] = $readHandler[0];
+            }
+            $writeFps = array();
+            foreach ($this->writeHandlers as $writeHandler) {
+                $writeFps[] = $writeHandler[0];
+            }
             //echo posix_getpid().' '.sizeof($readFps).'r,w'.sizeof($writeFps)." timeout:{$loopTimeout} ".(($loopTimeout-(int)($loopTimeout))*1000000).PHP_EOL;
             $except = array();
             if (0 < @stream_select($readFps, $writeFps, $except, (int)$loopTimeout, ($loopTimeout-(int)($loopTimeout))*1000000)) {
@@ -159,11 +166,11 @@ class PHPServer_Loop {
              * @var $iFp int
              */
             //echo posix_getpid().' 触发读事件'.PHP_EOL;
-            call_user_func($this->readHandlers[$iFp]['handler'], $this->readHandlers[$iFp]['fp']);
+            call_user_func($this->readHandlers[$iFp][1], $this->readHandlers[$iFp][0]);
         }
         foreach ($this->writeQueue as $iFp) {
             //echo posix_getpid().' 触发写事件'.PHP_EOL;
-            call_user_func($this->writeHandlers[$iFp]['handler'], $this->writeHandlers[$iFp]['fp']);
+            call_user_func($this->writeHandlers[$iFp][1], $this->writeHandlers[$iFp][0]);
         }
         foreach ($this->onceQueue as $once) {
             /**
@@ -205,20 +212,14 @@ class PHPServer_Loop {
     }
 
     public function registerReadHandler($fp, $readHandler) {
-        $this->readHandlers[(int)$fp] = array(
-            'fp'=>$fp,
-            'handler'=>$readHandler
-        );
+        $this->readHandlers[(int)$fp] = array($fp, $readHandler);
     }
     public function removeReadHandler($fp) {
         unset($this->readHandlers[(int)$fp]);
     }
 
     public function registerWriteHandler($fp, $writeHandler) {
-        $this->writeHandlers[(int)$fp] = array(
-            'fp'=>$fp,
-            'handler'=>$writeHandler
-        );
+        $this->writeHandlers[(int)$fp] = array($fp, $writeHandler);
     }
     public function removeWriteHandler($fp) {
         unset($this->writeHandlers[(int)$fp]);
