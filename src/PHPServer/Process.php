@@ -107,7 +107,8 @@ abstract class PHPServer_Process {
         $pid = pcntl_fork();
         switch ($pid) {
             case -1:
-                throw new RuntimeException('error on call pcntl_fork()');
+                fprintf(STDOUT, 'error on call pcntl_fork()');
+                exit(1);
             default: // parent
                 return $pid;
         }

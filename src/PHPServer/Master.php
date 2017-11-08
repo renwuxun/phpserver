@@ -34,7 +34,10 @@ class PHPServer_Master extends PHPServer_Process {
             $this->demonize();
         }
 
-        PHPServer_Helper::writePidFile($this->pidFile);
+        if (!PHPServer_Helper::writePidFile($this->pidFile)) {
+            fprintf(STDOUT, "can not write pidfile: {$this->pidFile}\n");
+            exit(1);
+        }
 
         foreach ($workerNames as $workerName) {
             $this->spawnWorker($workerName);
@@ -52,7 +55,6 @@ class PHPServer_Master extends PHPServer_Process {
                 fprintf(STDOUT, "worker[$pid] exit\n");
                 continue;
             }
-
 
             $this->spawnWorker($workName);
         }
@@ -90,7 +92,8 @@ class PHPServer_Master extends PHPServer_Process {
 
     public function spawnWorker($workerName) {
         if (!is_subclass_of($workerName, 'PHPServer_Worker') ) {
-            throw new Exception('worker must subclass of PHPServer_Worker', 1);
+            fprintf(STDOUT, 'worker must subclass of PHPServer_Worker');
+            exit(1);
         }
 
         $childPid = static::spawn(
