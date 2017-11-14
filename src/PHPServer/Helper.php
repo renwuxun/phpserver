@@ -14,7 +14,7 @@ class PHPServer_Helper {
 
     public static function writePidFile($pidFile) {
         $path = substr($pidFile, 0, strrpos($pidFile, '/'));
-        if (!is_dir($path)) {
+        if ($path != '' && !is_dir($path)) {
             mkdir($path, 0775, true);
         }
         if (file_put_contents($pidFile, posix_getpid())) {
