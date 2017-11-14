@@ -38,18 +38,18 @@ class PHPServer_Loop {
      */
     protected $writeQueue;
     /**
-     * @var SplObjectStorage
+     * @var array
      */
-    protected $writeHandlers;
+    protected $writeHandlers = array();
 
     /**
      * @var SplQueue
      */
     protected $readQueue;
     /**
-     * @var SplObjectStorage
+     * @var array
      */
-    protected $readHandlers;
+    protected $readHandlers = array();
 
     /**
      * @var SplQueue
@@ -72,10 +72,8 @@ class PHPServer_Loop {
         $this->timeoutQueue->setIteratorMode(SplQueue::IT_MODE_DELETE);
         $this->readQueue = new SplQueue;
         $this->readQueue->setIteratorMode(SplQueue::IT_MODE_DELETE);
-        $this->readHandlers = new SplObjectStorage;
         $this->writeQueue = new SplQueue;
         $this->writeQueue->setIteratorMode(SplQueue::IT_MODE_DELETE);
-        $this->writeHandlers = new SplObjectStorage;
         $this->onceQueue = new SplQueue;
         $this->onceQueue->setIteratorMode(SplQueue::IT_MODE_DELETE);
 
@@ -111,26 +109,26 @@ class PHPServer_Loop {
             $loopTimeout = 0.0;
         }
 
-        //echo posix_getpid().' readHandlers count: '.$this->readHandlers->count().' , readHandlers count: '.$this->writeHandlers->count().PHP_EOL;
-        if ($this->readHandlers->count() > 0 || $this->writeHandlers->count() > 0) {
+        //echo posix_getpid().' readHandlers count: '.sizeof($this->readHandlers).' , readHandlers count: '.sizeof($this->writeHandlers).PHP_EOL;
+        if (!empty($this->readHandlers) || !empty($this->writeHandlers)) {
             $readFps = array();
-            foreach ($this->readHandlers as $readFp) {
-                $readFps[] = $readFp;
+            foreach ($this->readHandlers as $readHandler) {
+                $readFps[] = $readHandler[0];
             }
             $writeFps = array();
-            foreach ($this->writeHandlers as $writeFp) {
-                $writeFps[] = $writeFp;
+            foreach ($this->writeHandlers as $writeHandler) {
+                $writeFps[] = $writeHandler[0];
             }
             //echo posix_getpid().' '.sizeof($readFps).'r,w'.sizeof($writeFps)." timeout:{$loopTimeout} ".(($loopTimeout-(int)($loopTimeout))*1000000).PHP_EOL;
             $except = array();
             if (0 < @stream_select($readFps, $writeFps, $except, (int)$loopTimeout, ($loopTimeout-(int)($loopTimeout))*1000000)) {
                 foreach ($readFps as $readFp) {
                     //echo posix_getpid().' 有可读事件发生'.PHP_EOL;
-                    $this->readQueue->enqueue($readFp);
+                    $this->readQueue->enqueue((int)$readFp);
                 }
                 foreach ($writeFps as $writeFp) {
                     //echo posix_getpid().' 有可写事件发生'.PHP_EOL;
-                    $this->writeQueue->enqueue($writeFp);
+                    $this->writeQueue->enqueue((int)$writeFp);
                 }
             }
 
@@ -166,15 +164,15 @@ class PHPServer_Loop {
              */
             call_user_func($timer->handler);
         }
-        foreach ($this->readQueue as $fp) {
+        foreach ($this->readQueue as $iFp) {
             $idle = false;
             //echo posix_getpid().' 触发读事件'.PHP_EOL;
-            call_user_func($this->readHandlers[$fp], $fp);
+            call_user_func($this->readHandlers[$iFp][1], $this->readHandlers[$iFp][0]);
         }
-        foreach ($this->writeQueue as $fp) {
+        foreach ($this->writeQueue as $iFp) {
             $idle = false;
             //echo posix_getpid().' 触发写事件'.PHP_EOL;
-            call_user_func($this->writeHandlers[$fp], $fp);
+            call_user_func($this->writeHandlers[$iFp][1], $this->writeHandlers[$iFp][0]);
         }
         foreach ($this->onceQueue as $once) {
             $idle = false;
@@ -219,17 +217,17 @@ class PHPServer_Loop {
     }
 
     public function registerReadHandler($fp, $readHandler) {
-        $this->readHandlers[$fp] = $readHandler;
+        $this->readHandlers[(int)$fp] = array($fp, $readHandler);
     }
     public function removeReadHandler($fp) {
-        unset($this->readHandlers[$fp]);
+        unset($this->readHandlers[(int)$fp]);
     }
 
     public function registerWriteHandler($fp, $writeHandler) {
-        $this->writeHandlers[$fp] = $writeHandler;
+        $this->writeHandlers[(int)$fp] = array($fp, $writeHandler);
     }
     public function removeWriteHandler($fp) {
-        unset($this->writeHandlers[$fp]);
+        unset($this->writeHandlers[(int)$fp]);
     }
 
     public function registerSignalHandler($signo, $signalHandler) {
@@ -249,8 +247,8 @@ class PHPServer_Loop {
             $this->dispatch();
             if (
                 empty($this->signalHandlers) &&
-                $this->readHandlers->count() == 0 &&
-                $this->writeHandlers->count() == 0 &&
+                empty($this->readHandlers) &&
+                empty($this->writeHandlers) &&
                 $this->timerHeap->isEmpty() &&
                 $this->onceQueue->isEmpty() &&
                 empty($this->idleHandlers)
