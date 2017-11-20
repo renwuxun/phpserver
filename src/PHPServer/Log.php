@@ -10,17 +10,17 @@
  */
 class PHPServer_Log {
 
-    const LEVEL_EMERG = 'EMERG';
-    const LEVEL_ALERT = 'ALERT';
-    const LEVEL_CRIT = 'CRIT';
-    const LEVEL_ERROR = 'ERROR';
-    const LEVEL_WARNING = 'WARNING';
-    const LEVEL_NOTICE = 'NOTICE';
-    const LEVEL_INFO = 'INFO';
-    const LEVEL_DEBUG = 'DEBUG';
+    const EMERGENCY = 'emergency';
+    const ALERT     = 'alert';
+    const CRITICAL  = 'critical';
+    const ERROR     = 'error';
+    const WARNING   = 'warning';
+    const NOTICE    = 'notice';
+    const INFO      = 'info';
+    const DEBUG     = 'debug';
 
-    public static function format($msg, $level, $context = array()) {
-        $msg = '['.date('Y-m-d H:i:s').'] '.$level.' '.$msg;
+    public static function format($level, $msg, $context = array()) {
+        $msg = date('Y/m/d H:i:s').' ['.$level.'] '.$msg;
         if (!empty($context)) {
             $msg .= ' '.json_encode($context);
         }
@@ -39,34 +39,34 @@ class PHPServer_Log {
         return static::logPath().'/'.date('Y-m-d').'.log';
     }
 
-    protected static function log($msg, $level, $context = array()) {
-        $msg = static::format($msg, $level, $context);
+    protected static function log($level, $msg, $context = array()) {
+        $msg = static::format($level, $msg, $context);
         file_put_contents(static::logFile(), $msg.PHP_EOL, FILE_APPEND);
     }
 
     public static function debug($msg, $context = array()) {
-        static::log($msg, static::LEVEL_DEBUG, $context);
+        static::log(self::DEBUG, $msg, $context);
     }
     public static function info($msg, $context = array()) {
-        static::log($msg, static::LEVEL_INFO, $context);
+        static::log(self::INFO, $msg, $context);
     }
     public static function notice($msg, $context = array()) {
-        static::log($msg, static::LEVEL_NOTICE, $context);
+        static::log(self::NOTICE, $msg, $context);
     }
     public static function warning($msg, $context = array()) {
-        static::log($msg, static::LEVEL_WARNING, $context);
+        static::log(self::WARNING, $msg, $context);
     }
     public static function error($msg, $context = array()) {
-        static::log($msg, static::LEVEL_ERROR, $context);
+        static::log(self::ERROR, $msg, $context);
     }
-    public static function crit($msg, $context = array()) {
-        static::log($msg, static::LEVEL_CRIT, $context);
+    public static function critical($msg, $context = array()) {
+        static::log(self::CRITICAL, $msg, $context);
     }
     public static function alert($msg, $context = array()) {
-        static::log($msg, static::LEVEL_ALERT, $context);
+        static::log(self::ALERT, $msg, $context);
     }
-    public static function emerg($msg, $context = array()) {
-        static::log($msg, static::LEVEL_EMERG, $context);
+    public static function emergency($msg, $context = array()) {
+        static::log(self::EMERGENCY, $msg, $context);
     }
 
     public static function aLine($s) {
