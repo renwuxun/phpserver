@@ -8,6 +8,11 @@
  */
 class PHPServer_Helper {
 
+    /**
+     * @deprecated
+     * @param $pidFile
+     * @return bool
+     */
     public static function ifServerRunning($pidFile) {
         if (file_exists($pidFile)) {
             $pid = (int)file_get_contents($pidFile);
@@ -21,6 +26,11 @@ class PHPServer_Helper {
         return false;
     }
 
+    /**
+     * @deprecated
+     * @param $pidFile
+     * @return bool
+     */
     public static function writePidFile($pidFile) {
         $path = substr($pidFile, 0, strrpos($pidFile, '/'));
         if ($path != '' && !is_dir($path)) {
@@ -37,18 +47,24 @@ class PHPServer_Helper {
         return false;
     }
 
+    protected static $pidFile;
     public static function checkContinue($cmd, $pidFile) {
+        if (null === $pidFile) {
+            self::$pidFile = new PHPServer_PidFile($pidFile);
+        }
+
         global $argv;
         switch ($cmd) {
             case 'start':
             case 'daemon':
-                if (self::ifServerRunning($pidFile)) {
+                if (!self::$pidFile->tryLock()) {
                     fprintf(STDERR, "{$argv[0]} is running\n");
                     exit(1);
                 }
                 break;
             case 'stop';
-                if (!self::ifServerRunning($pidFile)) {
+                if (self::$pidFile->tryLock()) {
+                    self::$pidFile->unLock();
                     fprintf(STDERR, "{$argv[0]} is not running\n");
                     exit(1);
                 }
@@ -56,7 +72,8 @@ class PHPServer_Helper {
                 exit(0);
                 break;
             case 'reload';
-                if (!self::ifServerRunning($pidFile)) {
+                if (self::$pidFile->tryLock()) {
+                    self::$pidFile->unLock();
                     fprintf(STDERR, "{$argv[0]} is not running\n");
                     exit(1);
                 }
