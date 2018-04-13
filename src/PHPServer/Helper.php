@@ -9,7 +9,16 @@
 class PHPServer_Helper {
 
     public static function ifServerRunning($pidFile) {
-        return file_exists($pidFile) && posix_kill((int)file_get_contents($pidFile), 0);
+        if (file_exists($pidFile)) {
+            $pid = (int)file_get_contents($pidFile);
+            if (posix_kill($pid, 0)) {
+                if (shell_exec("cat /proc/$pid/cmdline") == shell_exec("cat /proc/".posix_getpid()."/cmdline")) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     public static function writePidFile($pidFile) {
