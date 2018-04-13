@@ -87,7 +87,6 @@ class PHPServer_Loop {
 
         $hasHandlerToCall = false;
 
-        // process idle
         // process once
         if (!$this->onceQueue->isEmpty()) {
             $hasHandlerToCall = true;
@@ -98,15 +97,15 @@ class PHPServer_Loop {
             $this->timeoutQueue->enqueue($this->timerHeap->extract());
         }
 
-        if (!$hasHandlerToCall) {
-            if (!$this->timerHeap->isEmpty()) {
+        if ($hasHandlerToCall) {// 有事情可干了
+            $loopTimeout = 0.0;
+        } else {
+            if (!$this->timerHeap->isEmpty()) { // 最近要发生的事件是什么时候
                 $delta = $this->timerHeap->top()->fireAt - $this->now;
                 if ($delta < $loopTimeout) {
                     $loopTimeout = sprintf("%.4f", $delta);
                 }
             }
-        } else {
-            $loopTimeout = 0.0;
         }
 
         //echo posix_getpid().' readHandlers count: '.sizeof($this->readHandlers).' , readHandlers count: '.sizeof($this->writeHandlers).PHP_EOL;
@@ -130,17 +129,11 @@ class PHPServer_Loop {
                     //echo posix_getpid().' 有可写事件发生'.PHP_EOL;
                     $this->writeQueue->enqueue((int)$writeFp);
                 }
+
+                if (!empty($readFps) || !empty($writeFps)) { // 有事可干了
+                    $loopTimeout = 0.0;
+                }
             }
-
-            if ($loopTimeout > 0) {
-                $this->now += $loopTimeout;
-            }
-
-            $loopTimeout = 0.0;
-        }
-
-        if ($loopTimeout > 0) { // 说明没经历过网络i/o环节，信号环节需要等待
-            $this->now += $loopTimeout;
         }
 
         $sigInfo = array();
@@ -181,6 +174,8 @@ class PHPServer_Loop {
              */
             call_user_func($once);
         }
+
+        // 跑空转事件
         if ($idle) {
             foreach ($this->idleHandlers as $idleHandler) {
                 call_user_func($idleHandler);
